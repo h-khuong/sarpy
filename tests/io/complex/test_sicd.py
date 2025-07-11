@@ -7,8 +7,15 @@ from sarpy.io.complex.converter import conversion_utility
 from sarpy.io.complex.sicd import SICDReader
 from sarpy.io.complex.sicd_schema import get_schema_path, get_default_version_string
 
+<<<<<<< HEAD
 
 from tests import parse_file_entry
+=======
+
+
+from tests import parse_file_entry
+
+>>>>>>> 74fe677 (AmpLookupFunction tests)
 
 try:
     from lxml import etree
@@ -62,4 +69,8 @@ class TestSICDWriting(unittest.TestCase):
 
             with self.subTest(msg='Test writing a single row of the sicd file {}'.format(fil)):
                 with tempfile.TemporaryDirectory() as tmpdirname:
+<<<<<<< HEAD
                     conversion_utility(reader, tmpdirname, row_limits=(0, 1))
+=======
+                    conversion_utility(reader, tmpdirname, row_limits=(0, 1))
+>>>>>>> 74fe677 (AmpLookupFunction tests)

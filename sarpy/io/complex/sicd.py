@@ -99,8 +99,7 @@ class AmpLookupFunction(ComplexFormatFunction):
 
         if self._raw_dtype.name != 'uint8':
             raise ValueError(
-                'A magnitude lookup table has been supplied,\n\t'
-                'but the raw datatype is not `uint8`.')
+                'A magnitude lookup table has been supplied, but the raw datatype is not `uint8`.')
         self._magnitude_lookup_table = lookup_table
 
     def _forward_magnitude_theta(
