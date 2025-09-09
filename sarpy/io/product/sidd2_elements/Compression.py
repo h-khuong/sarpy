@@ -73,10 +73,11 @@ class J2KSubtype(Serializable):
                 bitrates[i] = float(obj[i][0].text)
             self.LayerInfo = bitrates
         
+        # per the above definition, LayerInfo can be a numpy.ndarray, a  list, or a tuple
         elif isinstance(obj, (list, tuple, numpy.ndarray)):
             self.LayerInfo = obj 
 
-        # none object handler since LayerInfo isn't a required field
+        # none object handler since it states that LayerInfo can be None in the definition above and it isn't a required field
         elif obj is None:
             self.LayerInfo = None
 

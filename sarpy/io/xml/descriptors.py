@@ -352,7 +352,10 @@ class IntegerDescriptor(BasicDescriptor):
     def __set__(self, instance, value):
         if super(IntegerDescriptor, self).__set__(instance, value):  # the None handler...kinda hacky
             return
-
+        # 55 tests failed with this included
+        # only 8 fail when this is commented out (2 are from test_compression, and the other 6 are from test_sidd_product_creation, these 6 tests also fail when strict-DEFAULT_STRICT)
+        # the 2 tests that fail from test_compression are because the test case is looking for the error message that's thrown from this block 
+        # that tells us that this block causes 47 other tests to fail that are unexpected
         if self.strict:
             if not isinstance(value, int):
                 try: 
