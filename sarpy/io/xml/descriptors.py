@@ -357,7 +357,9 @@ class IntegerDescriptor(BasicDescriptor):
         # the 2 tests that fail from test_compression are because the test case is looking for the error message that's thrown from this block 
         # that tells us that this block causes 47 other tests to fail that are unexpected
         if self.strict:
-            if not isinstance(value, int):
+            if isinstance(value, ElementTree.Element):
+                value = value.text
+            elif not isinstance(value, int) and (value is not None):
                 try: 
                     value = int(value)
                 except (ValueError, TypeError) as e:
