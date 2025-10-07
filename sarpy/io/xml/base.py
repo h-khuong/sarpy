@@ -28,7 +28,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 valid_logger = logging.getLogger('validation')
 
-DEFAULT_STRICT = False
+DEFAULT_STRICT = True
 
 
 #################
