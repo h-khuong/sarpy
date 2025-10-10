@@ -54,6 +54,7 @@ from sarpy.io.product.sidd1_elements.GeographicAndTarget import GeographicAndTar
 from sarpy.io.product.sidd1_elements.Measurement import MeasurementType as MeasurementType1
 from sarpy.io.product.sidd1_elements.ExploitationFeatures import ExploitationFeaturesType as ExploitationFeaturesType1
 from sarpy.io.product.sidd1_elements.ProductCreation import ProductCreationType as ProductCreationType1
+import sarpy.visualization.remap as remap
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +210,8 @@ def _create_plane_projection_v3(proj_helper, bounds):
 #########################
 # Version 3 element creation
 
-def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type):
+def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, 
+                             remap_function=remap.get_registered_remap('nrl')):
     """
     Create a SIDD version 3.0 structure based on the orthorectification helper
     and pixel bounds.
@@ -224,6 +226,8 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type):
         :code:`Dynamic Image, Amplitude Change Detection, Coherent Change Detection`
     pixel_type : str
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class see sarpy/visualation/remap
 
     Returns
     -------
@@ -244,9 +248,9 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type):
             NonInteractiveProcessing=[NonInteractiveProcessingType3(
                 ProductGenerationOptions=ProductGenerationOptionsType3(
                     DataRemapping=NewLookupTableType3(
-                        LUTName='DENSITY',
+                        LUTName=remap_function.name.upper(),
                         Predefined=PredefinedLookupType3(
-                            DatabaseName='DENSITY'))),
+                            DatabaseName=remap_function.name.upper()))),
                 RRDS=RRDSType3(DownsamplingMethod='DECIMATE'),
                 band=i+1) for i in range(bands)],
             InteractiveProcessing=[InteractiveProcessingType3(
@@ -306,6 +310,8 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type):
     prod_create = ProductCreationType3.from_sicd(ortho_helper.proj_helper.sicd, product_class)
     prod_create.Classification.ISMCATCESVersion = '201903'
     prod_create.Classification.compliesWith = 'USGov'
+    if not isinstance(remap_function, remap.RemapFunction):
+        raise TypeError("Input 'remap_function' must be a remap.RemapFunction.")
 
     # Display requires more product specifics
     display = _create_display_v3()
@@ -326,7 +332,8 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type):
 #########################
 # Version 2 element creation
 
-def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type):
+def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type, 
+                             remap_function=remap.get_registered_remap('nrl') ):
     """
     Create a SIDD version 2.0 structure based on the orthorectification helper
     and pixel bounds.
@@ -341,6 +348,8 @@ def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type):
         :code:`Dynamic Image, Amplitude Change Detection, Coherent Change Detection`
     pixel_type : str
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class see sarpy/visualation/remap
 
     Returns
     -------
@@ -361,9 +370,9 @@ def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type):
             NonInteractiveProcessing=[NonInteractiveProcessingType2(
                 ProductGenerationOptions=ProductGenerationOptionsType2(
                     DataRemapping=NewLookupTableType(
-                        LUTName='DENSITY',
+                        LUTName=remap_function.name.upper(),
                         Predefined=PredefinedLookupType(
-                            DatabaseName='DENSITY'))),
+                            DatabaseName=remap_function.name.upper()))),
                 RRDS=RRDSType2(DownsamplingMethod='DECIMATE'),
                 band=i+1) for i in range(bands)],
             InteractiveProcessing=[InteractiveProcessingType2(
@@ -423,6 +432,8 @@ def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type):
     prod_create = ProductCreationType2.from_sicd(ortho_helper.proj_helper.sicd, product_class)
     prod_create.Classification.ISMCATCESVersion = '201903'
     prod_create.Classification.compliesWith = 'USGov'
+    if not isinstance(remap_function, remap.RemapFunction):
+        raise TypeError("Input 'remap_function' must be a remap.RemapFunction.")
 
     # Display requires more product specifics
     display = _create_display_v2()
@@ -521,7 +532,8 @@ def create_sidd_structure_v1(ortho_helper, bounds, product_class, pixel_type):
 ##########################
 # Switchable version SIDD structure
 
-def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, version=3):
+def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, 
+                          version=3, remap_function=remap.get_registered_remap('nrl')):
     """
     Create a SIDD structure, with version specified, based on the orthorectification
     helper and pixel bounds.
@@ -538,18 +550,21 @@ def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, versi
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
     version : int
         The SIDD version, must be either 1, 2, or 3.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class see sarpy/visualation/remap
 
     Returns
     -------
     SIDDType1|SIDDType2|SIDDType3
     """
-
+    if not isinstance(remap_function, remap.RemapFunction):
+        raise TypeError("Input 'remap_function' must be a remap.RemapFunction.")
     if version not in [1, 2, 3]:
         raise ValueError('version must be 1, 2, or 3. Got {}'.format(version))
 
     if version == 1:
         return create_sidd_structure_v1(ortho_helper, bounds, product_class, pixel_type)
     elif version == 2:
-        return create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type)
+        return create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type, remap_function=remap_function )
     else:
-        return create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type)
+        return create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, remap_function=remap_function )
