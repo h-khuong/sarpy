@@ -59,6 +59,27 @@ def test_write_filehandle(tests_path, tmp_path):
             writer.write(data)
 
         assert not fd.closed
+    assert filecmp.cmp(in_nitf, out_nitf, shallow=False)
+
+def test_in_memory_write(tests_path, tmp_path):
+    in_nitf_mem = tests_path / "data/iq.nitf"
+    with sarpy.io.general.nitf.NITFReader(str(in_nitf_mem)) as reader_mem:
+        data_mem = reader_mem.read()
+        writer_details_mem = sarpy.io.general.nitf.NITFWritingDetails(
+            reader_mem.nitf_details.nitf_header,
+            (sarpy.io.general.nitf.ImageSubheaderManager(reader_mem.get_image_header(0)),),
+            reader_mem.image_segment_collections,
+        )
+    
+    out_nitf_mem = tmp_path / 'output_memory.nitf'
+    with out_nitf_mem.open('wb') as fd_mem:
+        with sarpy.io.general.nitf.NITFWriter(
+            fd_mem, writing_details=writer_details_mem, in_memory=True
+        ) as writer_mem:
+            writer_mem.write(data_mem)
+
+        assert not fd_mem.closed
+    assert filecmp.cmp(in_nitf_mem, out_nitf_mem, shallow=False)
 
 test_data = tests.find_test_data_files(pathlib.Path(__file__).parent / "csi.json")
 rgb_nitf = test_data["csi_files"][0] if test_data["csi_files"] else None
