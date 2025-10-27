@@ -1,6 +1,8 @@
+import numpy
+import pytest
+import re
 import unittest
 
-import numpy
 from sarpy.io.general.format_function import IdentityFunction, ComplexFormatFunction, SingleLUTFormatFunction
 
 
@@ -63,7 +65,7 @@ class TestComplexFunction(unittest.TestCase):
             out_data = func(base_data, (slice(0, 2, 1), slice(0, 3, 1), slice(0, 2, 1)))
             test_data = numpy.empty((2, 3), dtype='complex64')
             test_data.real = base_data[:, :, 0]
-            test_data.imag = base_data[:, :, 1]
+            test_data.imag = base_data[:, :, 1                                                                                                                                                                                                                                   ]
             self.assertTrue(numpy.all(out_data == test_data), msg='IQ forward')
 
             inv_data = func.inverse(out_data, (slice(0, 2, 1), slice(0, 3, 1)))
@@ -187,3 +189,107 @@ class TestSingleLUTFormatFunction(unittest.TestCase):
                 func = SingleLUTFormatFunction(lut, base_data.shape, out_shape)
                 out_data = func(base_data, (slice(0, 51, 1), slice(0, 49, 1)))
                 self.assertTrue(numpy.array_equal(out_data, lut[base_data]), msg='LUT forward')
+    
+    def test_single_lut_format_function_init(self):
+        lookup_table = numpy.arange(256, dtype=numpy.uint8)
+        raw_shape = (3, 3)
+        formatted_shape = (3, 3)
+        reverse_axes = None
+        transpose_axes = None
+
+        base = numpy.array([
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+        ], dtype = numpy.uint8)
+    
+        function = SingleLUTFormatFunction(lookup_table, raw_shape, formatted_shape)
+        result = function(base, slice(reverse_axes), slice(transpose_axes))
+
+        # we expect result to equal base because we aren't applying any transformations to base (reverse axes and transpose axes are both None)
+        assert numpy.array_equal(result, base) 
+    
+    def transform_raw_slice_no_transpose_2D(self):
+        lut = numpy.arange(256, dtype = numpy.uint8)
+
+        raw_shape = (100, 200)
+        formatted_shape = (100, 200)
+
+        transpose_axes = None
+
+        function = SingleLUTFormatFunction(lut, raw_shape, formatted_shape, transpose_axes)
+
+        subscript = [slice(10, 20, 1), slice(30, 50, 1)]
+
+        result = function.transform_raw_slice(subscript)
+
+        # since transpose is None, we should get the same value
+        assert numpy.array_equal(result, subscript) 
+    
+    def transform_raw_slice_with_transpose_2D(self):
+        lut = numpy.arange(256, dtype = numpy.uint8)
+
+        raw_shape = (100, 200)
+        formatted_shape = (200, 100)
+
+        transpose_axes = (1, 0) # flips row/column
+
+        function = SingleLUTFormatFunction(lut, raw_shape, formatted_shape, transpose_axes)
+
+        subscript = [slice(10, 20, 1), slice(30, 40, 1)]
+
+        expected = (slice(30, 40, 1), slice(10, 20, 1))
+
+        result = function.transform_raw_slice(subscript)
+
+        # since transpose is (1,0), we should swap the row and column values
+        assert numpy.array_equal(result, expected) 
+
+    def test_transform_raw_slice_mismatched_shapes(self):
+        lut = numpy.arange(256, dtype = numpy.uint8)
+
+        raw_shape = (1, 2)
+        formatted_shape = (1, 2, 3)
+
+        transpose_axes = (0, 1)
+
+        function = SingleLUTFormatFunction(lut, raw_shape, formatted_shape, transpose_axes)
+
+        subscript = [slice(0, 1, 1), slice(0, 1, 1)]
+
+        with pytest.raises(IndexError, 
+                    match = re.escape("list index out of range")):
+            function.transform_raw_slice(subscript)
+
+
+    def test_transform_raw_slice_matching_subscript_rawshape(self):
+        lut = numpy.arange(256, dtype = numpy.uint8)
+
+        raw_shape = (1, 2)
+        formatted_shape = (1, 2)
+
+        transpose_axes = (0, 1)
+
+        function = SingleLUTFormatFunction(lut, raw_shape, formatted_shape, transpose_axes)
+
+        subscript = [slice(0, 1, 1)]
+
+        with pytest.raises(ValueError, 
+                    match = re.escape("The length of subscript and raw_shape must match")):
+            function.transform_raw_slice(subscript)
+
+    def test_transform_raw_slice_unpopulated_step_value(self):
+        lut = numpy.arange(256, dtype = numpy.uint8)
+
+        raw_shape = (1, 2)
+        formatted_shape = (1, 2, 3)
+
+        transpose_axes = (0, 1)
+
+        function = SingleLUTFormatFunction(lut, raw_shape, formatted_shape, transpose_axes)
+
+        subscript = [slice(100, 10), slice(0, 1)]
+
+        with pytest.raises(ValueError, 
+                        match = re.escape("input slice has unpopulated step value")):
+            function.transform_raw_slice(subscript)
