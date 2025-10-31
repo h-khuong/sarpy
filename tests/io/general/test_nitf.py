@@ -92,7 +92,11 @@ def test_read_rgb_nitf(tests_path, tmp_path):
             (sarpy.io.general.nitf.ImageSubheaderManager(reader.get_image_header(0)),),
             reader.image_segment_collections,
         )
-        assert len(reader.nitf_details.img_headers[0].Bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
+        bands = reader.nitf_details.img_headers[0].Bands
+        assert len(bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
+
+        band_ids = [band.IREPBAND for band in bands]
+        assert band_ids == ["R", "G", "B"], f'The band ids are ({band_ids})'
 
     out_nitf = tmp_path / 'output.nitf'
     with out_nitf.open('wb') as fd:
@@ -104,6 +108,9 @@ def test_read_rgb_nitf(tests_path, tmp_path):
 
 def test_open_rgb_nitf():
     with sarpy.io.general.nitf.NITFReader(str(rgb_nitf)) as reader:
-        assert len(reader.nitf_details.img_headers[0].Bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
-
+        bands = reader.nitf_details.img_headers[0].Bands
+        assert len(bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
+        
+        band_ids = [band.IREPBAND for band in bands]
+        assert band_ids == ["R", "G", "B"], f'The band ids are ({band_ids})'
 # "20200727f01p0034faradx0353_188_11113VH_000_132239_SL0006R_31N086W_001X___QVH_0101_SPY_CSI.nitf"
