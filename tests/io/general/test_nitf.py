@@ -92,15 +92,18 @@ def test_read_rgb_nitf(tests_path, tmp_path):
             (sarpy.io.general.nitf.ImageSubheaderManager(reader.get_image_header(0)),),
             reader.image_segment_collections,
         )
-        # subreader = reader.readers[0]
-        # chip = subreader.read_chip((0, 100), (0, 100))
-        # SingleLUTFormatFunction.transform_raw_slice(chip, (0, 50), (0, 50))
+        assert len(reader.nitf_details.img_headers[0].Bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
 
     out_nitf = tmp_path / 'output.nitf'
     with out_nitf.open('wb') as fd:
         with sarpy.io.general.nitf.NITFWriter(
             fd, writing_details=writer_details
         ) as writer:
-            writer.write(data)
-
+            writer.write(data) 
         assert not fd.closed
+
+def test_open_rgb_nitf():
+    with sarpy.io.general.nitf.NITFReader(str(rgb_nitf)) as reader:
+        assert len(reader.nitf_details.img_headers[0].Bands) == 3 , f"This NITF has ({reader.image_segment_collections.count}) bands"
+
+# "20200727f01p0034faradx0353_188_11113VH_000_132239_SL0006R_31N086W_001X___QVH_0101_SPY_CSI.nitf"
